@@ -41,6 +41,10 @@ const global = this;
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyServiceGetter(global, "sss",
+    "@mozilla.org/content/style-sheet-service;1", "nsIStyleSheetService");
 
 // Remember various offsets enough to hide tabs + shadow or show them
 const OFFSETS = {
@@ -56,12 +60,10 @@ function addSearchTabs(window) {
 
   // Create a box for tabs that sit near the bottom of the screen
   let tabs = createNode("hbox");
+  tabs.setAttribute("id", "searchTabs");
   tabs.setAttribute("bottom", 0);
   tabs.setAttribute("left", 0);
   tabs.setAttribute("right", 0);
-
-  tabs.style.height = "96px";
-  tabs.style.pointerEvents = "none";
 
   // Move the box to the current tab
   tabs.move = function() {
@@ -87,14 +89,10 @@ function addSearchTabs(window) {
   // Create search tabs based on the installed search engines
   Services.search.getEngines().forEach(function(engine) {
     let tab = createNode("box");
+    tab.setAttribute("class", "searchTab");
     tab.setAttribute("flex", 1);
     tab.setAttribute("pack", "center");
     tabs.appendChild(tab);
-
-    tab.style.backgroundColor = "white";
-    tab.style.borderRadius = "10px 10px 0 0";
-    tab.style.padding = "32px 0";
-    tab.style.pointerEvents = "auto";
 
     // Shift and change the transparency based on how much to offset
     tab.offset = function(offset) {
@@ -167,13 +165,9 @@ function addSearchTabs(window) {
 
     // Add the search icon in the center of the tab
     let img = document.createElementNS("http://www.w3.org/1999/xhtml", "img");
+    img.setAttribute("class", "searchTab-img");
     img.setAttribute("src", engine.iconURI.spec);
     tab.appendChild(img);
-
-    img.style.display = "block";
-    img.style.height = "32px";
-    img.style.pointerEvents = "none";
-    img.style.width = "32px";
 
     // Wait for the image to load to detect colors
     img.addEventListener("load", function() {
@@ -251,6 +245,15 @@ function startup({id}) AddonManager.getAddonByID(id, function(addon) {
 
   // Add search tabs with colors
   watchWindows(addSearchTabs);
+
+  // Add browser.css
+  sss.loadAndRegisterSheet(
+      addon.getResourceURI("skin/browser.css"), sss.USER_SHEET);
+
+  unload(function() {
+    sss.unregisterSheet(
+        addon.getResourceURI("skin/browser.css"), sss.USER_SHEET);
+  });
 })
 
 
