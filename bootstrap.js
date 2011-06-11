@@ -57,11 +57,7 @@ function addSearchTabs(window) {
   // Create a box for tabs that sit near the bottom of the screen
   let tabs = createNode("hbox");
   tabs.setAttribute("bottom", 0);
-  tabs.setAttribute("left", 0);
-  tabs.setAttribute("right", 0);
-
-  tabs.style.height = "96px";
-  tabs.style.pointerEvents = "none";
+  tabs.setAttribute("id", "searchTabs");
 
   // Move the box to the current tab
   tabs.move = function() {
@@ -87,14 +83,8 @@ function addSearchTabs(window) {
   // Create search tabs based on the installed search engines
   Services.search.getEngines().forEach(function(engine) {
     let tab = createNode("box");
-    tab.setAttribute("flex", 1);
-    tab.setAttribute("pack", "center");
+    tab.setAttribute("class", "searchTab");
     tabs.appendChild(tab);
-
-    tab.style.backgroundColor = "white";
-    tab.style.borderRadius = "10px 10px 0 0";
-    tab.style.padding = "32px 0";
-    tab.style.pointerEvents = "auto";
 
     // Shift and change the transparency based on how much to offset
     tab.offset = function(offset) {
@@ -170,11 +160,6 @@ function addSearchTabs(window) {
     img.setAttribute("src", engine.iconURI.spec);
     tab.appendChild(img);
 
-    img.style.display = "block";
-    img.style.height = "32px";
-    img.style.pointerEvents = "none";
-    img.style.width = "32px";
-
     // Wait for the image to load to detect colors
     img.addEventListener("load", function() {
       let color = getDominantColor(img);
@@ -248,6 +233,9 @@ function startup({id}) AddonManager.getAddonByID(id, function(addon) {
     let fileURI = addon.getResourceURI("scripts/" + fileName + ".js");
     Services.scriptloader.loadSubScript(fileURI.spec, global);
   });
+
+  // Load style files that get automatically unloaded
+  loadStyles(addon, ["browser"]);
 
   // Add search tabs with colors
   watchWindows(addSearchTabs);
