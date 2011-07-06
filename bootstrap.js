@@ -113,7 +113,7 @@ function addSearchTabs(window) {
   listen(gBrowser.tabContainer, "TabSelect", function() tabs.move());
 
   // Create search tabs based on the installed search engines
-  Services.search.getEngines().forEach(function(engine) {
+  Services.search.getVisibleEngines().forEach(function(engine) {
     let tab = createNode("box");
     tab.setAttribute("class", "searchTab");
     tabs.appendChild(tab);
