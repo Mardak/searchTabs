@@ -59,6 +59,38 @@ function addSearchTabs(window) {
   tabs.setAttribute("bottom", 0);
   tabs.setAttribute("id", "searchTabs");
 
+  // Keep track of the prefix and suffix url parts for each engine
+  tabs.engineParts = [];
+
+  // Figure out the query terms if it's a search
+  tabs.extractQuery = function(url) {
+    let {cache} = tabs.extractQuery;
+    if (cache != null && cache.url == url)
+      return cache.query;
+
+    let query;
+    tabs.engineParts.some(function({prefix, suffix}) {
+      if (url.indexOf(prefix) != 0)
+        return false;
+
+      let suffixPos = url.lastIndexOf(suffix);
+      if (url.slice(suffixPos) != suffix)
+        return false;
+
+      let component = url.slice(prefix.length, suffixPos).replace(/\+/g, " ");
+      query = decodeURIComponent(component);
+      return true;
+    });
+
+    // Keep a cache of the last processed url
+    tabs.extractQuery.cache = {
+      query: query,
+      url: url,
+    };
+
+    return query;
+  };
+
   // Move the box to the current tab
   tabs.move = function() {
     gBrowser.selectedBrowser.parentNode.appendChild(tabs);
@@ -172,6 +204,16 @@ function addSearchTabs(window) {
       // Add a border with the dominant color
       tab.style.boxShadow = "0 0 20px " + rgb(1) + " inset, 0 0 5px black";
     }, false);
+
+    // Figure out what comes before and after the query
+    const dummy = "DUMMY_STRING_FOR_SUBMISSION";
+    let {spec} = engine.getSubmission(dummy).uri;
+    let parts = spec.split(dummy);
+    tabs.engineParts.push({
+      prefix: parts[0],
+      suffix: parts[1],
+      tab: tab,
+    });
   });
 
   // Display the icons for a little on startup then hide
@@ -225,6 +267,16 @@ function addSearchTabs(window) {
         return;
       }
       return value;
+    },
+
+    // See if the current tab is on a search engine's result page
+    function checkLocation() {
+      let nav = gBrowser.selectedBrowser.webNavigation;
+      let uri = nav.currentURI;
+      let chan = nav.documentChannel || nav.currentDocumentChannel;
+      if (chan != null)
+        uri = chan.originalURI;
+      return tabs.extractQuery(uri.spec);
     },
   ];
 
