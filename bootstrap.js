@@ -187,36 +187,46 @@ function addSearchTabs(window) {
     if (checker.timer != null)
       return;
 
+    // Figure out what window object to use for checking
+    let doc = originalTarget.ownerDocument;
+    let targetWindow = (doc == null ? null : doc.defaultView) || window;
+
     // Delay checking just a little bit to allow for merging
     checker.timer = async(function() {
       checker.timer = null;
 
-      // Figure out if there's any selected text in the appropriate context
-      let doc = originalTarget.ownerDocument;
-      let targetWindow = (doc == null ? null : doc.defaultView) || window;
+      // Process each checker in order and get the first match
+      let value;
+      checker.callbacks.some(function(callback) {
+        value = callback(targetWindow) || "";
+        return value != "";
+      });
 
-      // Prefer the selection text over focused if we have something
-      let selection = String.trim(targetWindow.getSelection());
-      if (selection != "") {
-        tabs.shiftAll(OFFSETS.partial);
-        checker.value = selection;
-        return;
-      }
+      // Show or hide based on if the checkers found anything
+      tabs.shiftAll(value == "" ? OFFSETS.hidden : OFFSETS.partial);
+      checker.value = value;
+    }, 100);
+  }
 
-      // Check if an input box is selected with text
+  // Add various callbacks to check if something can be searched
+  checker.callbacks = [
+    // Figure out if there's any selected text in the appropriate context
+    function checkSelection(targetWindow) {
+      return String.trim(targetWindow.getSelection());
+    },
+
+    // Check if an input box is selected with text
+    function checkInput() {
       let {focusedElement} = document.commandDispatcher;
       let {nodeName, type, value} = focusedElement || {};
       if (nodeName == null ||
           nodeName.search(/^(html:)?input$/i) == -1 ||
           type.search(/^text$/i) == -1) {
-        tabs.shiftAll(OFFSETS.hidden);
         return;
       }
-
-      tabs.shiftAll(value == "" ? OFFSETS.hidden : OFFSETS.partial);
-      checker.value = value;
-    }, 100);
-  }
+      return value;
+    },
+  ];
 
   // Look for various events to detect focus or selection change
   listen(window, "focus", checker);
