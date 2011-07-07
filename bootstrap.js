@@ -234,7 +234,9 @@ function addSearchTabs(window) {
       return;
 
     // Figure out what window object to use for checking
-    let doc = originalTarget.ownerDocument;
+    let doc = originalTarget;
+    if (doc.nodeName != "#document")
+      doc = doc.ownerDocument;
     let targetWindow = (doc == null ? null : doc.defaultView) || window;
 
     // Delay checking just a little bit to allow for merging
