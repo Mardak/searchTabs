@@ -49,4 +49,8 @@
            title="Show tabs when typing"
            type="bool"/>
 
+  <setting pref="extensions.searchTabs.hideSearchbar"
+           title="Hide the search bar"
+           type="bool"/>
+
 </box>

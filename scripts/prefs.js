@@ -63,6 +63,7 @@ pref.defaults = {
   checkInput: false,
   checkLocation: true,
   checkSelection: false,
+  hideSearchbar: false,
 };
 
 /**

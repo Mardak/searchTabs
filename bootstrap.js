@@ -51,8 +51,12 @@ const OFFSETS = {
 
 // Add search tabs that allow searching with installed search engines
 function addSearchTabs(window) {
-  let {async, createNode, getDominantColor, listen, unload} = makeWindowHelpers(window);
+  let {async, change, createNode, getDominantColor, listen, unload} = makeWindowHelpers(window);
   let {document, gBrowser} = window;
+
+  // Make sure the search bar is hidden as desired
+  let hideSearch = pref("hideSearchbar");
+  change(document.getElementById("search-container"), "hidden", hideSearch);
 
   // Create a box for tabs that sit near the bottom of the screen
   let tabs = createNode("hbox");
@@ -300,11 +304,20 @@ function startup({id}) AddonManager.getAddonByID(id, function(addon) {
     Services.scriptloader.loadSubScript(fileURI.spec, global);
   });
 
-  // Load style files that get automatically unloaded
-  loadStyles(addon, ["browser"]);
+  // Initialize the add-on UI
+  (function init() {
+    // Reload the interface when certain prefs change
+    pref.observe(["hideSearchbar"], function() {
+      unload();
+      init();
+    });
 
-  // Add search tabs with colors
-  watchWindows(addSearchTabs);
+    // Load style files that get automatically unloaded
+    loadStyles(addon, ["browser"]);
+
+    // Add search tabs with colors
+    watchWindows(addSearchTabs);
+  })();
 })
 
 
