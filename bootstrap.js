@@ -237,7 +237,11 @@ function addSearchTabs(window) {
     let doc = originalTarget;
     if (doc.nodeName != "#document")
       doc = doc.ownerDocument;
+
+    // Only care about events for the current tab
     let targetWindow = (doc == null ? null : doc.defaultView) || window;
+    if (targetWindow.top != gBrowser.selectedBrowser.contentWindow)
+      return;
 
     // Delay checking just a little bit to allow for merging
     checker.timer = async(function() {
