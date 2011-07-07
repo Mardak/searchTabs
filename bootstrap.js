@@ -240,6 +240,10 @@ function addSearchTabs(window) {
       // Process each checker in order and get the first match
       let value;
       checker.callbacks.some(function(callback) {
+        // Skip this callback if the pref says to
+        if (!pref(callback.name))
+          return;
+
         value = callback(targetWindow) || "";
         return value != "";
       });
@@ -291,7 +295,7 @@ function addSearchTabs(window) {
  */
 function startup({id}) AddonManager.getAddonByID(id, function(addon) {
   // Load various javascript includes for helper functions
-  ["helper", "utils"].forEach(function(fileName) {
+  ["helper", "prefs", "utils"].forEach(function(fileName) {
     let fileURI = addon.getResourceURI("scripts/" + fileName + ".js");
     Services.scriptloader.loadSubScript(fileURI.spec, global);
   });
